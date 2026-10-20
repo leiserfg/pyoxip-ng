@@ -67,16 +67,16 @@ impl<T: Eq + Hash> Collection<T> {
 #[pyclass(eq, eq_int)]
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
 pub enum RowFilter {
-    NoOp = oxi::RowFilter::None as isize,
-    Sub = oxi::RowFilter::Sub as isize,
-    Up = oxi::RowFilter::Up as isize,
-    Average = oxi::RowFilter::Average as isize,
-    Paeth = oxi::RowFilter::Paeth as isize,
-    MinSum = oxi::RowFilter::MinSum as isize,
-    Entropy = oxi::RowFilter::Entropy as isize,
-    Bigrams = oxi::RowFilter::Bigrams as isize,
-    BigEnt = oxi::RowFilter::BigEnt as isize,
-    Brute = oxi::RowFilter::Brute as isize,
+    NoOp = 0,
+    Sub = 1,
+    Up = 2,
+    Average = 3,
+    Paeth = 4,
+    MinSum = 5,
+    Entropy = 6,
+    Bigrams = 7,
+    BigEnt = 8,
+    Brute = 9,
 }
 
 #[pymethods]
@@ -88,19 +88,24 @@ impl RowFilter {
     }
 }
 
-impl From<RowFilter> for oxi::RowFilter {
+impl From<RowFilter> for oxi::FilterStrategy {
     fn from(val: RowFilter) -> Self {
+        use oxi::FilterStrategy;
+
         match val {
-            RowFilter::NoOp => Self::None,
-            RowFilter::Sub => Self::Sub,
-            RowFilter::Up => Self::Up,
-            RowFilter::Average => Self::Average,
-            RowFilter::Paeth => Self::Paeth,
-            RowFilter::MinSum => Self::MinSum,
-            RowFilter::Entropy => Self::Entropy,
-            RowFilter::Bigrams => Self::Bigrams,
-            RowFilter::BigEnt => Self::BigEnt,
-            RowFilter::Brute => Self::Brute,
+            RowFilter::NoOp => FilterStrategy::NONE,
+            RowFilter::Sub => FilterStrategy::SUB,
+            RowFilter::Up => FilterStrategy::UP,
+            RowFilter::Average => FilterStrategy::AVERAGE,
+            RowFilter::Paeth => FilterStrategy::PAETH,
+            RowFilter::MinSum => FilterStrategy::MinSum,
+            RowFilter::Entropy => FilterStrategy::Entropy,
+            RowFilter::Bigrams => FilterStrategy::Bigrams,
+            RowFilter::BigEnt => FilterStrategy::BigEnt,
+            RowFilter::Brute => FilterStrategy::Brute {
+                num_lines: 8,
+                level: 5,
+            },
         }
     }
 }
@@ -109,8 +114,8 @@ impl From<RowFilter> for oxi::RowFilter {
 #[pyclass(eq, eq_int)]
 #[derive(PartialEq, Clone, Debug, Hash)]
 pub enum Interlacing {
-    Off = oxi::Interlacing::None as isize,
-    Adam7 = oxi::Interlacing::Adam7 as isize,
+    Off = 0,
+    Adam7 = 1,
 }
 
 #[pymethods]
@@ -122,12 +127,9 @@ impl Interlacing {
     }
 }
 
-impl From<Interlacing> for oxi::Interlacing {
+impl From<Interlacing> for bool {
     fn from(val: Interlacing) -> Self {
-        match val {
-            Interlacing::Off => Self::None,
-            Interlacing::Adam7 => Self::Adam7,
-        }
+        matches!(val, Interlacing::Adam7)
     }
 }
 
@@ -164,19 +166,21 @@ impl StripChunks {
 
 #[pyclass]
 #[derive(Debug, Clone)]
-pub struct Deflaters(pub oxi::Deflaters);
+pub struct Deflaters(pub oxi::Deflater);
 
 #[pymethods]
 impl Deflaters {
     #[staticmethod]
     fn libdeflater(compression: u8) -> Self {
-        Self(oxi::Deflaters::Libdeflater { compression })
+        Self(oxi::Deflater::Libdeflater { compression })
     }
 
     #[staticmethod]
     fn zopfli(iterations: u8) -> PyResult<Self> {
         if let Some(iterations) = NonZeroU8::new(iterations) {
-            Ok(Self(oxi::Deflaters::Zopfli { iterations }))
+            let mut options = oxi::ZopfliOptions::default();
+            options.iteration_count = iterations.into();
+            Ok(Self(oxi::Deflater::Zopfli(options)))
         } else {
             Err(PyTypeError::new_err(format!(
                 "Invalid zopfli iterations {}; must be in range [1, 255]",
@@ -199,16 +203,6 @@ where
             PyValueError::new_err("Value can't be extracted")
         })?))
     }
-}
-
-/// Extract a python value that may be None and convert to another type
-pub fn py_option_extract<'py, 'a, T, U>(val: &'py Bound<'py, PyAny>) -> PyResult<Option<U>>
-where
-    T: FromPyObject<'a, 'py>,
-    U: From<T>,
-    'py: 'a,
-{
-    Ok(py_option::<T>(val)?.and_then(|v| Some(v.into())))
 }
 
 /// Extract a python float as a rust Duration type

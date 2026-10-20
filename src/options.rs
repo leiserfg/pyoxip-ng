@@ -42,8 +42,20 @@ fn parse_kw_opt(key: &str, value: &Bound<'_, PyAny>, opts: &mut oxi::Options) ->
         "level" => {} // Handled elsewhere, ignore
         "fix_errors" => opts.fix_errors = value.cast::<PyBool>()?.is_true(),
         "force" => opts.force = value.cast::<PyBool>()?.is_true(),
-        "filter" => opts.filter = value.extract::<Collection<RowFilter>>()?.remap(),
-        "interlace" => opts.interlace = py_option_extract::<Interlacing, oxi::Interlacing>(value)?,
+        "filter" => {
+            let mut filters = oxi::IndexSet::new();
+            for item in value.try_iter()? {
+                filters.insert(item?.extract::<PyRef<'_, RowFilter>>()?.clone().into());
+            }
+            opts.filters = filters;
+        }
+        "interlace" => {
+            opts.interlace = if value.is_none() {
+                None
+            } else {
+                Some(value.extract::<PyRef<'_, Interlacing>>()?.clone().into())
+            };
+        },
         "optimize_alpha" => opts.optimize_alpha = value.cast::<PyBool>()?.is_true(),
         "bit_depth_reduction" => opts.bit_depth_reduction = value.cast::<PyBool>()?.is_true(),
         "color_type_reduction" => opts.color_type_reduction = value.cast::<PyBool>()?.is_true(),
@@ -51,8 +63,8 @@ fn parse_kw_opt(key: &str, value: &Bound<'_, PyAny>, opts: &mut oxi::Options) ->
         "grayscale_reduction" => opts.grayscale_reduction = value.cast::<PyBool>()?.is_true(),
         "idat_recoding" => opts.idat_recoding = value.cast::<PyBool>()?.is_true(),
         "scale_16" => opts.scale_16 = value.cast::<PyBool>()?.is_true(),
-        "strip" => opts.strip = value.extract::<StripChunks>()?.0,
-        "deflate" => opts.deflate = value.extract::<Deflaters>()?.0,
+        "strip" => opts.strip = value.extract::<PyRef<'_, StripChunks>>()?.0.clone(),
+        "deflate" => opts.deflater = value.extract::<PyRef<'_, Deflaters>>()?.0,
         "fast_evaluation" => opts.fast_evaluation = value.cast::<PyBool>()?.is_true(),
         "timeout" => opts.timeout = py_duration(value)?,
         _ => return Err(PyTypeError::new_err("Unsupported option")),
