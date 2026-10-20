@@ -26,10 +26,13 @@ jobs:
         platform:
           - runner: ubuntu-24.04
             target: x86_64
+            manylinux: 2_28
           - runner: ubuntu-24.04
             target: x86
+            manylinux: 2_28
           - runner: ubuntu-24.04
             target: aarch64
+            manylinux: 2_28
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
