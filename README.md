@@ -5,7 +5,7 @@
 
 Python wrapper for multithreaded .png image file optimizer
 [oxipng](https://github.com/shssoichiro/oxipng) (written in Rust). Use
-`pyoxipng` to reduce the file size of your PNG images.
+`pyoxipng-ng` to reduce the file size of your PNG images.
 
 Jump to a section
 
@@ -29,7 +29,7 @@ Jump to a section
 Install from PyPI:
 
 ```sh
-pip install pyoxipng
+pip install pyoxipng-ng
 ```
 
 Import in your Python code:

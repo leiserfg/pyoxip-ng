@@ -1,11 +1,11 @@
 [build-system]
-requires = ["maturin~=1.10.0"]
+requires = ["maturin>=1.10.0"]
 build-backend = "maturin"
 
 [project]
-name = "pyoxipng"
-requires-python = ">=3.8"
-version = "9.1.1"
+name = "pyoxipng-ng"
+requires-python = ">=3.9"
+version = "10.0.0"
 description = "Python wrapper for multithreaded .png image file optimizer oxipng"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -18,7 +18,7 @@ keywords = [
     "compress",
     "png",
 ]
-authors = [{ name = "Nick Frasser <nfrasser@users.noreply.github.com>" }]
+authors = [{ name = "Nick Frasser <nfrasser@users.noreply.github.com>" }, { name = "Leiser Fernánde Gallo <leiserfg@users.noreply.github.com>" }]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Rust",
@@ -28,12 +28,17 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "https://github.com/nfrasser/pyoxipng"
-documentation = "https://github.com/nfrasser/pyoxipng#readme"
-repository = "https://github.com/nfrasser/pyoxipng"
-changelog = "https://github.com/nfrasser/pyoxipng/blob/main/CHANGELOG.md"
+homepage = "https://github.com/leiserfg/pyoxipng"
+documentation = "https://github.com/leiserfg/pyoxipng#readme"
+repository = "https://github.com/leiserfg/pyoxipng"
+changelog = "https://github.com/leiserfg/pyoxipng/blob/main/CHANGELOG.md"
 
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",
 ]
+
+[tool.maturin.generate-ci.github]
+trusted-publishing = true
+# Optional: name of the GitHub Actions environment to use for the release job
+publishing-environment = "release"
